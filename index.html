@@ -11,71 +11,56 @@
 <body>
     <input type="file" id="uploadInput" accept="image/*" multiple>
     <button onclick="cropImages()">Crop Images</button>
-    <div id="outputContainer"></div>
+    <a id="downloadLink" style="display: none;" download="cropped_images.zip">Download Cropped Images</a>
 
     <script>
         function cropImages() {
             const input = document.getElementById('uploadInput');
-            const outputContainer = document.getElementById('outputContainer');
+            const downloadLink = document.getElementById('downloadLink');
+            const images = input.files;
+            let currentImageIndex = 0;
 
-            const promises = Array.from(input.files).map((file, index) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = URL.createObjectURL(file);
+            function cropNextImage() {
+                if (currentImageIndex < images.length) {
+                    cropImage(images[currentImageIndex]);
+                } else {
+                    // All images cropped, trigger download link
+                    downloadLink.click();
+                }
+            }
 
-                    img.onload = function () {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const blackThreshold = 30;
+            function cropImage(image) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const aspectRatio = 4 / 3;
 
-                        // Find cropping dimensions
-                        let leftMostNonBlack = img.width;
-                        let rightMostNonBlack = 0;
+                const img = new Image();
+                img.src = URL.createObjectURL(image);
 
-                        ctx.drawImage(img, 0, 0);
-                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
-                        const data = imageData.data;
+                img.onload = function() {
+                    // Calculate cropped dimensions based on 4:3 aspect ratio
+                    const cropWidth = img.width;
+                    const cropHeight = img.width / aspectRatio;
 
-                        for (let x = 0; x < img.width; x++) {
-                            for (let y = 0; y < img.height; y++) {
-                                const index = (y * img.width + x) * 4;
-                                const red = data[index];
-                                const green = data[index + 1];
-                                const blue = data[index + 2];
+                    // Set canvas dimensions
+                    canvas.width = cropWidth;
+                    canvas.height = cropHeight;
 
-                                // Check if the pixel is not black
-                                if (!(red < blackThreshold && green < blackThreshold && blue < blackThreshold)) {
-                                    leftMostNonBlack = Math.min(leftMostNonBlack, x);
-                                    rightMostNonBlack = Math.max(rightMostNonBlack, x);
-                                }
-                            }
-                        }
+                    // Draw the content onto the cropped canvas
+                    ctx.drawImage(img, 0, 0, cropWidth, cropHeight);
 
-                        // Crop image
-                        const croppedWidth = rightMostNonBlack - leftMostNonBlack;
-                        canvas.width = croppedWidth;
-                        canvas.height = img.height;
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, leftMostNonBlack, 0, croppedWidth, img.height, 0, 0, croppedWidth, img.height);
+                    // Display and enable download link
+                    downloadLink.href = canvas.toDataURL();
+                    downloadLink.style.display = 'block';
 
-                        // Create download link
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = canvas.toDataURL();
-                        downloadLink.download = `cropped_image_${index + 1}.png`;
-                        downloadLink.innerText = `Download Image ${index + 1}`;
+                    // Move to the next image
+                    currentImageIndex++;
+                    cropNextImage();
+                };
+            }
 
-                        // Append download link to container
-                        outputContainer.appendChild(downloadLink);
-
-                        resolve();
-                    };
-                });
-            });
-
-            // Ensure images are downloaded in order
-            promises.reduce((prevPromise, currentPromise) => {
-                return prevPromise.then(() => currentPromise);
-            }, Promise.resolve());
+            // Start cropping the first image
+            cropNextImage();
         }
     </script>
 </body>
