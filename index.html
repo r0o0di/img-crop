@@ -63,11 +63,12 @@
         <input type="file" id="uploadInput" accept="image/*" multiple>
     </div>
     <button onclick="previewImages()">Preview Images</button>
-    <button onclick="downloadImages()" style="display: none;">Download Cropped Images</button>
+    <button onclick="downloadImages()">Download Cropped Images</button>
     <div id="previewContainer"></div>
 
     <script>
         function previewImages() {
+            console.log("Starting image preview...");
             const input = document.getElementById('uploadInput');
             const previewContainer = document.getElementById('previewContainer');
             const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
@@ -75,15 +76,17 @@
             let currentImageIndex = 0;
 
             function previewNextImage() {
+                console.log(`Previewing image ${currentImageIndex + 1} of ${images.length}`);
                 if (currentImageIndex < images.length) {
                     previewImage(images[currentImageIndex]);
                 } else {
-                    // All images previewed, show download button
+                    console.log("All images previewed, showing download button.");
                     downloadButton.style.display = 'block';
                 }
             }
 
             function previewImage(image) {
+                console.log(`Processing image: ${image.name}`);
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const finalWidth = 1625;
@@ -93,6 +96,9 @@
                 img.src = URL.createObjectURL(image);
 
                 img.onload = function () {
+                    console.log("Image loaded successfully.");
+
+
                     // Calculate left and right margins based on black pixels
                     const leftMargin = calculateMargin(img, 'left');
                     const rightMargin = calculateMargin(img, 'right');
@@ -124,49 +130,73 @@
             previewNextImage();
         }
 
-
         function downloadImages() {
+            console.log("Starting image download...");
             const input = document.getElementById('uploadInput');
             const images = input.files;
+            let currentImageIndex = 0;
 
-            for (let i = 0; i < images.length; i++) {
-                const image = images[i];
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const finalWidth = 1625;
-                const finalHeight = 1220;
-
-                const img = new Image();
-                img.src = URL.createObjectURL(image);
-
-                img.onload = function () {
-                    // Calculate left and right margins based on black pixels
-                    const leftMargin = calculateMargin(img, 'left');
-                    const rightMargin = calculateMargin(img, 'right');
-
-                    // Calculate cropped dimensions based on margins
-                    const cropWidth = img.width - leftMargin - rightMargin;
-                    const cropHeight = (cropWidth / finalWidth) * finalHeight;
-
-                    // Set canvas dimensions to the final size
-                    canvas.width = finalWidth;
-                    canvas.height = finalHeight;
-
-                    // Draw the content onto the cropped canvas
-                    ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
-
-                    // Trigger download for each image
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = canvas.toDataURL();
-
-                    // Use the original file name for the cropped image
-                    downloadLink.download = image.name;
-
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                };
+            function downloadNextImage() {
+                if (currentImageIndex < images.length) {
+                    downloadImage(images[currentImageIndex], function () {
+                        // Callback function - called after successful download
+                        console.log(`Image ${currentImageIndex + 1} downloaded successfully.`);
+                        currentImageIndex++;
+                        downloadNextImage(); // Download the next image
+                    });
+                } else {
+                    console.log("All images downloaded successfully.");
+                }
             }
+
+            // Start downloading the first image
+            downloadNextImage();
+        }
+
+        function downloadImage(image, callback) {
+            console.log(`Downloading image: ${image.name}`);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const finalWidth = 1625;
+            const finalHeight = 1220;
+
+            const img = new Image();
+            img.src = URL.createObjectURL(image);
+
+            img.onload = function () {
+                console.log("Image loaded successfully.");
+
+                // Calculate left and right margins based on black pixels
+                const leftMargin = calculateMargin(img, 'left');
+                const rightMargin = calculateMargin(img, 'right');
+
+                // Calculate cropped dimensions based on margins
+                const cropWidth = img.width - leftMargin - rightMargin;
+                const cropHeight = (cropWidth / finalWidth) * finalHeight;
+
+                // Set canvas dimensions to the final size
+                canvas.width = finalWidth;
+                canvas.height = finalHeight;
+
+                // Draw the content onto the cropped canvas
+                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+
+                // Trigger download for each image
+                const downloadLink = document.createElement('a');
+                downloadLink.href = canvas.toDataURL();
+
+                // Use the original file name for the cropped image
+                downloadLink.download = image.name;
+
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                // Invoke the callback function after successful download
+                if (callback) {
+                    callback();
+                }
+            };
         }
 
 
