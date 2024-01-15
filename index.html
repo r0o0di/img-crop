@@ -9,66 +9,73 @@
     </style>
 </head>
 <body>
-    <input type="file" id="uploadInput" accept="image/*">
-    <button onclick="cropImage()">Crop Image</button>
-    <canvas id="croppedCanvas" style="display: none;"></canvas>
-    <a id="downloadLink" style="display: none;" download="cropped_image.png">Download Cropped Image</a>
+    <input type="file" id="uploadInput" accept="image/*" multiple>
+    <button onclick="cropImages()">Crop Images</button>
+    <div id="outputContainer"></div>
 
     <script>
-        function cropImage() {
+        function cropImages() {
             const input = document.getElementById('uploadInput');
-            const canvas = document.getElementById('croppedCanvas');
-            const downloadLink = document.getElementById('downloadLink');
+            const outputContainer = document.getElementById('outputContainer');
 
-            const img = new Image();
-            img.src = URL.createObjectURL(input.files[0]);
+            const promises = Array.from(input.files).map((file, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(file);
 
-            img.onload = function() {
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0, img.width, img.height);
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const blackThreshold = 30;
 
-                // Cropping logic based on detecting black color on sides
-                const imageData = ctx.getImageData(0, 0, img.width, img.height);
-                const data = imageData.data;
+                        // Find cropping dimensions
+                        let leftMostNonBlack = img.width;
+                        let rightMostNonBlack = 0;
 
-                let leftMostNonBlack = img.width;
-                let rightMostNonBlack = 0;
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                        const data = imageData.data;
 
-                for (let y = 0; y < img.height; y++) {
-                    for (let x = 0; x < img.width; x++) {
-                        const index = (y * img.width + x) * 4;
-                        const red = data[index];
-                        const green = data[index + 1];
-                        const blue = data[index + 2];
+                        for (let x = 0; x < img.width; x++) {
+                            for (let y = 0; y < img.height; y++) {
+                                const index = (y * img.width + x) * 4;
+                                const red = data[index];
+                                const green = data[index + 1];
+                                const blue = data[index + 2];
 
-                        // Check if the pixel is not black
-                        if (!(red < 30 && green < 30 && blue < 30)) {
-                            leftMostNonBlack = Math.min(leftMostNonBlack, x);
-                            rightMostNonBlack = Math.max(rightMostNonBlack, x);
+                                // Check if the pixel is not black
+                                if (!(red < blackThreshold && green < blackThreshold && blue < blackThreshold)) {
+                                    leftMostNonBlack = Math.min(leftMostNonBlack, x);
+                                    rightMostNonBlack = Math.max(rightMostNonBlack, x);
+                                }
+                            }
                         }
-                    }
-                }
 
-                // Calculate the width of the non-black region
-                const nonBlackWidth = rightMostNonBlack - leftMostNonBlack;
+                        // Crop image
+                        const croppedWidth = rightMostNonBlack - leftMostNonBlack;
+                        canvas.width = croppedWidth;
+                        canvas.height = img.height;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, leftMostNonBlack, 0, croppedWidth, img.height, 0, 0, croppedWidth, img.height);
 
-                // Create a new canvas with the dimensions of the non-black region
-                const croppedCanvas = document.createElement('canvas');
-                croppedCanvas.width = nonBlackWidth;
-                croppedCanvas.height = img.height;
+                        // Create download link
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = canvas.toDataURL();
+                        downloadLink.download = `cropped_image_${index + 1}.png`;
+                        downloadLink.innerText = `Download Image ${index + 1}`;
 
-                // Draw the cropped image onto the new canvas
-                const croppedCtx = croppedCanvas.getContext('2d');
-                croppedCtx.drawImage(img, leftMostNonBlack, 0, nonBlackWidth, img.height, 0, 0, nonBlackWidth, img.height);
+                        // Append download link to container
+                        outputContainer.appendChild(downloadLink);
 
-                // Display and enable download link
-                canvas.style.display = 'none'; // Hide the original canvas
-                croppedCanvas.style.display = 'block';
-                downloadLink.href = croppedCanvas.toDataURL();
-                downloadLink.style.display = 'block';
-            };
+                        resolve();
+                    };
+                });
+            });
+
+            // Ensure images are downloaded in order
+            promises.reduce((prevPromise, currentPromise) => {
+                return prevPromise.then(() => currentPromise);
+            }, Promise.resolve());
         }
     </script>
 </body>
