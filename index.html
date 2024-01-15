@@ -183,7 +183,8 @@
 
                 // Trigger download for each image
                 const downloadLink = document.createElement('a');
-                downloadLink.href = canvas.toDataURL();
+
+                downloadLink.href = canvas.toDataURL('image/jpeg', 1);
 
                 // Use the original file name for the cropped image
                 downloadLink.download = image.name;
