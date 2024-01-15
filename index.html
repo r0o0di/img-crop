@@ -9,57 +9,48 @@
     </style>
 </head>
 <body>
-    <input type="file" id="uploadInput" accept="image/*">
-    <button onclick="cropImage()">Crop Image</button>
-    <canvas id="croppedCanvas" style="display: none;"></canvas>
-    <a id="downloadLink" style="display: none;" download="cropped_image.png">Download Cropped Image</a>
+    <input type="file" id="uploadInput" accept="image/*" multiple>
+    <button onclick="processImages()">Crop Images</button>
+    <div id="downloadLinks" style="display: none;"></div>
 
     <script>
-        function cropImage() {
+        function processImages() {
             const input = document.getElementById('uploadInput');
-            const canvas = document.getElementById('croppedCanvas');
-            const downloadLink = document.getElementById('downloadLink');
+            const downloadLinksContainer = document.getElementById('downloadLinks');
 
-            const img = new Image();
-            img.src = URL.createObjectURL(input.files[0]);
+            // Reset download links container
+            downloadLinksContainer.innerHTML = '';
 
-            img.onload = function() {
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0, img.width, img.height);
+            // Process each image sequentially
+            Array.from(input.files).forEach((file, index) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
 
-                // Cropping logic based on detecting black color on sides
-                const imageData = ctx.getImageData(0, 0, img.width, img.height);
-                const data = imageData.data;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
 
-                let leftMostNonBlack = img.width;
-                let rightMostNonBlack = 0;
+                    // Set canvas size maintaining 4:3 aspect ratio
+                    const aspectRatio = 4 / 3;
+                    canvas.width = Math.min(img.width, img.height * aspectRatio);
+                    canvas.height = canvas.width / aspectRatio;
 
-                for (let y = 0; y < img.height; y++) {
-                    for (let x = 0; x < img.width; x++) {
-                        const index = (y * img.width + x) * 4;
-                        const red = data[index];
-                        const green = data[index + 1];
-                        const blue = data[index + 2];
+                    // Crop image
+                    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
 
-                        // Check if the pixel is not black
-                        if (!(red < 30 && green < 30 && blue < 30)) {
-                            leftMostNonBlack = Math.min(leftMostNonBlack, x);
-                            rightMostNonBlack = Math.max(rightMostNonBlack, x);
-                        }
-                    }
-                }
+                    // Convert canvas to data URL with JPEG format and quality
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = canvas.toDataURL('image/jpeg', 0.8); // Adjust quality as needed
+                    downloadLink.download = `cropped_image_${index + 1}.jpg`;
+                    downloadLink.textContent = `Download Cropped Image ${index + 1}`;
 
-                // Crop the image based on the non-black region
-                ctx.clearRect(0, 0, leftMostNonBlack, img.height);
-                ctx.clearRect(rightMostNonBlack, 0, img.width - rightMostNonBlack, img.height);
+                    // Append download link to container
+                    downloadLinksContainer.appendChild(downloadLink);
 
-                // Display and enable download link
-                canvas.style.display = 'block';
-                downloadLink.href = canvas.toDataURL();
-                downloadLink.style.display = 'block';
-            };
+                    // Display download links container
+                    downloadLinksContainer.style.display = 'block';
+                };
+            });
         }
     </script>
 </body>
