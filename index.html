@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper</title>
+    <style>
+        /* Your CSS styles here */
+    </style>
+</head>
+<body>
+    <input type="file" id="uploadInput" accept="image/*">
+    <button onclick="cropImage()">Crop Image</button>
+    <canvas id="croppedCanvas" style="display: none;"></canvas>
+    <a id="downloadLink" style="display: none;" download="cropped_image.png">Download Cropped Image</a>
+
+    <script>
+        function cropImage() {
+            const input = document.getElementById('uploadInput');
+            const canvas = document.getElementById('croppedCanvas');
+            const downloadLink = document.getElementById('downloadLink');
+
+            const img = new Image();
+            img.src = URL.createObjectURL(input.files[0]);
+
+            img.onload = function() {
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                // Cropping logic based on detecting black color
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                const data = imageData.data;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const red = data[i];
+                    const green = data[i + 1];
+                    const blue = data[i + 2];
+
+                    // Check if the pixel is black (you can adjust the threshold)
+                    if (red < 30 && green < 30 && blue < 30) {
+                        data[i + 3] = 0; // Set alpha to 0 (transparent)
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+
+                // Display and enable download link
+                canvas.style.display = 'block';
+                downloadLink.href = canvas.toDataURL();
+                downloadLink.style.display = 'block';
+            };
+        }
+    </script>
+</body>
+</html>
