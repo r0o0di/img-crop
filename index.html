@@ -10,47 +10,72 @@
 </head>
 <body>
     <input type="file" id="uploadInput" accept="image/*" multiple>
-    <button onclick="processImages()">Crop Images</button>
-    <div id="downloadLinks" style="display: none;"></div>
+    <button onclick="cropImages()">Crop Images</button>
+    <div id="outputContainer"></div>
 
     <script>
-        function processImages() {
+        function cropImages() {
             const input = document.getElementById('uploadInput');
-            const downloadLinksContainer = document.getElementById('downloadLinks');
+            const outputContainer = document.getElementById('outputContainer');
 
-            // Reset download links container
-            downloadLinksContainer.innerHTML = '';
+            const promises = Array.from(input.files).map((file, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(file);
 
-            // Process each image sequentially
-            Array.from(input.files).forEach((file, index) => {
-                const img = new Image();
-                img.src = URL.createObjectURL(file);
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const blackThreshold = 30;
 
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+                        // Find cropping dimensions
+                        let leftMostNonBlack = img.width;
+                        let rightMostNonBlack = 0;
 
-                    // Set canvas size maintaining 4:3 aspect ratio
-                    const aspectRatio = 4 / 3;
-                    canvas.width = Math.min(img.width, img.height * aspectRatio);
-                    canvas.height = canvas.width / aspectRatio;
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                        const data = imageData.data;
 
-                    // Crop image
-                    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+                        for (let x = 0; x < img.width; x++) {
+                            for (let y = 0; y < img.height; y++) {
+                                const index = (y * img.width + x) * 4;
+                                const red = data[index];
+                                const green = data[index + 1];
+                                const blue = data[index + 2];
 
-                    // Convert canvas to data URL with JPEG format and quality
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = canvas.toDataURL('image/jpeg', 0.8); // Adjust quality as needed
-                    downloadLink.download = `cropped_image_${index + 1}.jpg`;
-                    downloadLink.textContent = `Download Cropped Image ${index + 1}`;
+                                // Check if the pixel is not black
+                                if (!(red < blackThreshold && green < blackThreshold && blue < blackThreshold)) {
+                                    leftMostNonBlack = Math.min(leftMostNonBlack, x);
+                                    rightMostNonBlack = Math.max(rightMostNonBlack, x);
+                                }
+                            }
+                        }
 
-                    // Append download link to container
-                    downloadLinksContainer.appendChild(downloadLink);
+                        // Crop image
+                        const croppedWidth = rightMostNonBlack - leftMostNonBlack;
+                        canvas.width = croppedWidth;
+                        canvas.height = img.height;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, leftMostNonBlack, 0, croppedWidth, img.height, 0, 0, croppedWidth, img.height);
 
-                    // Display download links container
-                    downloadLinksContainer.style.display = 'block';
-                };
+                        // Create download link
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = canvas.toDataURL();
+                        downloadLink.download = `cropped_image_${index + 1}.png`;
+                        downloadLink.innerText = `Download Image ${index + 1}`;
+
+                        // Append download link to container
+                        outputContainer.appendChild(downloadLink);
+
+                        resolve();
+                    };
+                });
             });
+
+            // Ensure images are downloaded in order
+            promises.reduce((prevPromise, currentPromise) => {
+                return prevPromise.then(() => currentPromise);
+            }, Promise.resolve());
         }
     </script>
 </body>
