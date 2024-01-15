@@ -29,22 +29,31 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0, img.width, img.height);
 
-                // Cropping logic based on detecting black color
+                // Cropping logic based on detecting black color on sides
                 const imageData = ctx.getImageData(0, 0, img.width, img.height);
                 const data = imageData.data;
 
-                for (let i = 0; i < data.length; i += 4) {
-                    const red = data[i];
-                    const green = data[i + 1];
-                    const blue = data[i + 2];
+                let leftMostNonBlack = img.width;
+                let rightMostNonBlack = 0;
 
-                    // Check if the pixel is black (you can adjust the threshold)
-                    if (red < 30 && green < 30 && blue < 30) {
-                        data[i + 3] = 0; // Set alpha to 0 (transparent)
+                for (let y = 0; y < img.height; y++) {
+                    for (let x = 0; x < img.width; x++) {
+                        const index = (y * img.width + x) * 4;
+                        const red = data[index];
+                        const green = data[index + 1];
+                        const blue = data[index + 2];
+
+                        // Check if the pixel is not black
+                        if (!(red < 30 && green < 30 && blue < 30)) {
+                            leftMostNonBlack = Math.min(leftMostNonBlack, x);
+                            rightMostNonBlack = Math.max(rightMostNonBlack, x);
+                        }
                     }
                 }
 
-                ctx.putImageData(imageData, 0, 0);
+                // Crop the image based on the non-black region
+                ctx.clearRect(0, 0, leftMostNonBlack, img.height);
+                ctx.clearRect(rightMostNonBlack, 0, img.width - rightMostNonBlack, img.height);
 
                 // Display and enable download link
                 canvas.style.display = 'block';
