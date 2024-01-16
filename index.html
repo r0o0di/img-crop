@@ -197,14 +197,6 @@
         <div id="previewContainer"></div>
     </div>
     <script>
-        const now = new Date();
-        const timestamp = now.getUTCFullYear() +
-            '_' + padNumber(now.getUTCMonth() + 1) +
-            '_' + padNumber(now.getUTCDate()) +
-            '_' + padNumber(now.getUTCHours()) +
-            '_' + padNumber(now.getUTCMinutes()) +
-            '_' + padNumber(now.getUTCSeconds());
-        //.toLocaleString().replace(/[-:]/g, '_') 
 
 
 
@@ -245,7 +237,7 @@
                     // Calculate left and right margins based on black pixels
                     const leftMargin = calculateMargin(img, 'left');
                     const rightMargin = calculateMargin(img, 'right');
-
+                
                     // Calculate cropped dimensions based on margins
                     const cropWidth = img.width - leftMargin - rightMargin;
                     const cropHeight = (cropWidth / finalWidth) * finalHeight;
@@ -273,78 +265,106 @@
             previewNextImage();
         }
 
+        // function downloadImages() {
+        //     console.log("Starting image download...");
+        //     const input = document.getElementById('uploadInput');
+        //     const images = input.files;
+        //     let currentImageIndex = 0;
+
+        //     function downloadNextImage() {
+        //         if (currentImageIndex < images.length) {
+        //             downloadImage(images[currentImageIndex], function () {
+        //                 // Callback function - called after successful download
+        //                 console.log(`Image ${currentImageIndex + 1} downloaded successfully.`);
+        //                 currentImageIndex++;
+        //                 downloadNextImage(); // Download the next image
+        //             });
+        //     } else {
+        //         console.log("All images downloaded successfully.");
+        //     }
+        // }
+
+        // // Start downloading the first image
+        // downloadNextImage();
+        // }
+
         function downloadImages() {
-            console.log("Starting image download...");
             const input = document.getElementById('uploadInput');
             const images = input.files;
-            let currentImageIndex = 0;
 
-            function downloadNextImage() {
-                if (currentImageIndex < images.length) {
-                    downloadImage(images[currentImageIndex], function () {
-                        // Callback function - called after successful download
-                        console.log(`Image ${currentImageIndex + 1} downloaded successfully.`);
-                        currentImageIndex++;
-                        downloadNextImage(); // Download the next image
-                    });
-                } else {
-                    console.log("All images downloaded successfully.");
+            // Sort images based on their names
+            const sortedImages = Array.from(images).sort((a, b) => {
+                const nameA = a.name.toLowerCase();
+                const nameB = b.name.toLowerCase();
+                return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            // Function to download images one by one with a delay
+            function downloadNextImage(index) {
+                if (index < sortedImages.length) {
+                    const image = sortedImages[index];
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const finalWidth = 1625;
+                    const finalHeight = 1220;
+
+                    const img = new Image();
+                    img.src = URL.createObjectURL(image);
+
+                    img.onload = function () {
+                        // Calculate left and right margins based on black pixels
+                        const leftMargin = calculateMargin(img, 'left');
+                        const rightMargin = calculateMargin(img, 'right');
+
+                        // Calculate cropped dimensions based on margins
+                        const cropWidth = img.width - leftMargin - rightMargin;
+                        const cropHeight = (cropWidth / finalWidth) * finalHeight;
+
+                        // Set canvas dimensions to the final size
+                        canvas.width = finalWidth;
+                        canvas.height = finalHeight;
+
+                        // Draw the content onto the cropped canvas
+                        ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+
+                        const now = new Date();
+                        const timestamp = now.getUTCFullYear() +
+                            '_' + padNumber(now.getUTCMonth() + 1) +
+                            '_' + padNumber(now.getUTCDate()) +
+                            '_' + padNumber(now.getUTCHours()) +
+                            '_' + padNumber(now.getUTCMinutes()) +
+                            '_' + padNumber(now.getUTCSeconds());
+                        //.toLocaleString().replace(/[-:]/g, '_') 
+
+
+                        // Trigger download for each image with the timestamped name
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = canvas.toDataURL();
+
+                        // Use the timestamped file name for the cropped image
+                        downloadLink.download = timestamp;
+
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+
+                        // Wait for one second before downloading the next image
+                        setTimeout(() => {
+                            downloadNextImage(index + 1);
+                        }, 1000);
+                    };
                 }
             }
 
             // Start downloading the first image
-            downloadNextImage();
+            downloadNextImage(0);
         }
 
-        function downloadImage(image, callback) {
-            console.log(`Downloading image: ${image.name}`);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const finalWidth = 1625;
-            const finalHeight = 1220;
-
-            const img = new Image();
-            img.src = URL.createObjectURL(image);
-
-            img.onload = function () {
-                console.log("Image loaded successfully.");
-
-                // Calculate left and right margins based on black pixels
-                const leftMargin = calculateMargin(img, 'left');
-                const rightMargin = calculateMargin(img, 'right');
-
-                // Calculate cropped dimensions based on margins
-                const cropWidth = img.width - leftMargin - rightMargin;
-                const cropHeight = (cropWidth / finalWidth) * finalHeight;
-
-                // Set canvas dimensions to the final size
-                canvas.width = finalWidth;
-                canvas.height = finalHeight;
-
-                // Draw the content onto the cropped canvas
-                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
-
-                // Trigger download for each image
-                const downloadLink = document.createElement('a');
-
-                downloadLink.href = canvas.toDataURL('image/jpeg', 1);
-
-                // Use the original file name for the cropped image
-                downloadLink.download = timestamp; // image.name  
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                // Invoke the callback function after successful download
-                if (callback) {
-                    callback();
-                }
-            };
-        }
+        // Helper function to pad single digits with a leading zero
         function padNumber(number) {
             return number < 10 ? '0' + number : number;
         }
+
 
         function calculateMargin(img, direction) {
             const canvas = document.createElement('canvas');
