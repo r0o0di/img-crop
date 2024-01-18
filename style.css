@@ -43,15 +43,24 @@ label {
 
 }
 
+.filler, .text, .counter {
+    display: none;
+}
 
 .download {
     color: #111111;
-    background-color: #ffcb74;
+    background-color: gray;
     font-size: 21px;
     width: 12rem;
     border-radius: 2rem;
     display: none;
 }
+
+.placeholder-download {
+    background-color: #ccc; /* Gray background color for the placeholder */
+    transition: background-color 0.5s ease-in-out; /* Smooth transition effect */
+}
+
 
 hr {
     border: none;
@@ -70,5 +79,5 @@ hr {
 .preview-image {
     max-width: 100%;
     max-height: 200px;
-    margin-bottom: 10px;
+    margin: 5px;
 }
