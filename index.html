@@ -18,37 +18,61 @@
             <label for="uploadInput">Choose Images</label>
             <input type="file" id="uploadInput" accept="image/*" multiple onchange="previewImages()">
         </div>
+        <div>
+            <label class="filler" for="fillerCheckbox">Add 'filler' Suffix</label>
+            <input type="checkbox" id="fillerCheckbox">
+        </div>
+        <div>
+            <label class="text" for="additionalText">Additional Text:</label>
+            <input type="text" id="additionalText">
+        </div>
         <button class="download" onclick="downloadImages()">Download</button>
+        <p class="counter" id="counter">0/0 images loaded...</p>
         <hr>
         <div id="previewContainer"></div>
     </div>
     <script>
-
-
-
-
         console.log(timestamp)
+
         function previewImages() {
             console.log("Starting image preview...");
             const input = document.getElementById('uploadInput');
             const previewContainer = document.getElementById('previewContainer');
             const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
             const images = input.files;
-            let currentImageIndex = 0;
-            downloadButton.style.display = 'none';
+            const counterElement = document.getElementById('counter');
+            const fillerCheckbox = document.getElementById('fillerCheckbox');
+            const additionalTextField = document.getElementById('additionalText');
+            let isDownloadButtonActive = false;
 
+            let currentImageIndex = 0;
 
             previewContainer.innerHTML = '';
+            downloadButton.style.background = "";
+            counterElement.textContent = `0/${images.length} images loaded`;
 
             function previewNextImage() {
                 console.log(`Previewing image ${currentImageIndex + 1} of ${images.length}`);
+                downloadButton.style.display = 'block';
+                counterElement.style.display = 'block';
+                counterElement.textContent = `${currentImageIndex}/${images.length} images loaded...`;
+
+                // Check if the download button is active
+                if (isDownloadButtonActive) {
+                    downloadButton.style.background = "#ffcb47";
+                } else {
+                    downloadButton.style.background = "";
+                }
+
                 if (currentImageIndex < images.length) {
                     previewImage(images[currentImageIndex]);
                 } else {
                     console.log("All images previewed, showing download button.");
-                    downloadButton.style.display = 'block';
+                    isDownloadButtonActive = true; // Activate the download button
+                    downloadButton.style.background = "#ffcb47";
                 }
             }
+
 
             function previewImage(image) {
                 console.log(`Processing image: ${image.name}`);
@@ -63,7 +87,6 @@
                 img.onload = function () {
                     console.log("Image loaded successfully.");
                     downloadButton.style.display = 'none';
-
 
                     // Calculate left and right margins based on black pixels
                     const leftMargin = calculateMargin(img, 'left');
@@ -99,6 +122,15 @@
         function downloadImages() {
             const input = document.getElementById('uploadInput');
             const images = input.files;
+            const fillerCheckbox = document.getElementById('fillerCheckbox');
+            const additionalTextField = document.getElementById('additionalText');
+            const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
+
+            // Check if the download button is active
+            if (downloadButton.style.background !== "rgb(255, 203, 71)") {
+                return;
+
+            }
 
             // Sort images based on their names
             const sortedImages = Array.from(images).sort((a, b) => {
@@ -142,15 +174,22 @@
                             '_' + padNumber(now.getUTCHours()) +
                             '_' + padNumber(now.getUTCMinutes()) +
                             '_' + padNumber(now.getUTCSeconds());
-                        //.toLocaleString().replace(/[-:]/g, '_') 
 
+                        // Get additional text from the input field
+                        const additionalText = additionalTextField.value;
+
+                        // Determine whether to add 'filler' suffix
+                        const suffix = fillerCheckbox.checked ? 'filler' : '';
+
+                        // Create the final filename
+                        const finalFileName = timestamp + '_' + additionalText + '_' + suffix;
 
                         // Trigger download for each image with the timestamped name
                         const downloadLink = document.createElement('a');
                         downloadLink.href = canvas.toDataURL();
 
-                        // Use the timestamped file name for the cropped image
-                        downloadLink.download = timestamp;
+                        // Use the final filename for the cropped image
+                        downloadLink.download = finalFileName;
 
                         document.body.appendChild(downloadLink);
                         downloadLink.click();
@@ -172,7 +211,6 @@
         function padNumber(number) {
             return number < 10 ? '0' + number : number;
         }
-
 
         function calculateMargin(img, direction) {
             const canvas = document.createElement('canvas');
