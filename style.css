@@ -5,6 +5,7 @@ body {
     margin: 0;
     padding: 20px;
     text-align: center;
+    font-size: 18px;
 }
 
 input[type="file"] {
@@ -13,10 +14,11 @@ input[type="file"] {
 
 
 .btns-container {
-    border: 1px solid red;
     display: flex;
     flex-direction: column;
-    
+    justify-content: center;
+    align-items: center;
+    height: 93.9vh;
 }
 
 button {
@@ -34,22 +36,25 @@ label {
     padding: 10px 15px;
     background-color: #3498db;
     color: #fff;
-    border-radius: 5px;
-    margin-bottom: 20px;
-}
-
-.preview {
-    background-color: #585757;
-    color: #ffdb9d;
+    border-radius: 2rem;
+    width: 10rem;
+    margin-bottom: 5px;
 
 }
+
 
 .download {
     color: #111111;
     background-color: #ffcb74;
-    font-size: 1.25rem;
-    
+    font-size: 21px;
+    width: 12rem;
+    border-radius: 2rem;
+    display: none;
+}
 
+hr {
+    border: none;
+    width: 100%;
 }
 #uploadContainer {
     text-align: center;
@@ -64,5 +69,5 @@ label {
 .preview-image {
     max-width: 100%;
     max-height: 200px;
-    margin: 10px;
+    margin-bottom: 10px;
 }
