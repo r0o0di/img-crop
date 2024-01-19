@@ -164,7 +164,7 @@ function downloadImages() {
                 // Wait for one second before downloading the next image
                 setTimeout(() => {
                     downloadNextImage(index + 1);
-                }, 0);
+                }, 1000);
             };
         }
     }
