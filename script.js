@@ -1,4 +1,3 @@
-console.log(timestamp)
 
 function previewImages() {
     console.log("Starting image preview...");
@@ -21,7 +20,7 @@ function previewImages() {
         console.log(`Previewing image ${currentImageIndex + 1} of ${images.length}`);
         downloadButton.style.display = 'block';
         counterElement.style.display = 'block';
-        counterElement.textContent = `${currentImageIndex}/${images.length} images loaded...`;
+        counterElement.textContent = `${currentImageIndex}/${images.length} images loaded`;
 
         // Check if the download button is active
         if (isDownloadButtonActive) {
@@ -53,6 +52,7 @@ function previewImages() {
         img.onload = function () {
             console.log("Image loaded successfully.");
             downloadButton.style.display = 'none';
+            progressCounter.style.display = "none";
 
             // Calculate left and right margins based on black pixels
             const leftMargin = calculateMargin(img, 'left');
@@ -91,6 +91,9 @@ function downloadImages() {
     const fillerCheckbox = document.getElementById('fillerCheckbox');
     const additionalTextField = document.getElementById('additionalText');
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
+    const progressCounter = document.getElementById('progressCounter');
+    let downloadedCount = 0;
+
 
     // Check if the download button is active
     if (downloadButton.style.background !== "rgb(255, 203, 71)") {
@@ -113,11 +116,13 @@ function downloadImages() {
             const ctx = canvas.getContext('2d');
             const finalWidth = 1625;
             const finalHeight = 1220;
+            const counterElement = document.getElementById('counter');
 
             const img = new Image();
             img.src = URL.createObjectURL(image);
 
             img.onload = function () {
+                counterElement.style.display = "none";
                 // Calculate left and right margins based on black pixels
                 const leftMargin = calculateMargin(img, 'left');
                 const rightMargin = calculateMargin(img, 'right');
@@ -160,6 +165,12 @@ function downloadImages() {
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
+
+                // Update the progress counter
+                progressCounter.style.display = "block";
+                downloadedCount++;
+                progressCounter.textContent = `${downloadedCount}/${images.length} images downloaded`;
+
 
                 // Wait for one second before downloading the next image
                 setTimeout(() => {

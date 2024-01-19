@@ -43,7 +43,7 @@ label {
 
 }
 
-.filler, .text, .counter {
+.filler, .text, .counter, .progress {
     display: none;
 }
 
