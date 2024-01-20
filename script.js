@@ -90,13 +90,19 @@ function downloadImages() {
     const additionalTextField = document.getElementById('additionalText');
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
     const progressCounter = document.getElementById('progressCounter');
-    let downloadedCount = 0;
-
+    let downloadedCount = 0; 
+    
 
     // Check if the download button is active
     if (downloadButton.style.background !== "rgb(255, 203, 71)") {
         return;
 
+    }
+
+    if (additionalTextField.value.trim() === "") {
+        const emptyText = document.getElementById("emptyText");
+        alert(emptyText.textContent);
+        return;
     }
 
     // Sort images based on their names
@@ -154,7 +160,7 @@ function downloadImages() {
 
 
                 // Create the final filename
-                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg';
+                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg'; 
 
 
 
@@ -174,7 +180,7 @@ function downloadImages() {
                 downloadedCount++;
                 progressCounter.textContent = `${downloadedCount}/${images.length} images downloaded`;
 
-                 // Wait before downloading the next image
+                // Wait before downloading the next image
                 setTimeout(() => {
                     downloadNextImage(index + 1);
                 }, 300);
