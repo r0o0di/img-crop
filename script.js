@@ -6,8 +6,6 @@ function previewImages() {
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
     const images = input.files;
     const counterElement = document.getElementById('counter');
-    const fillerCheckbox = document.getElementById('fillerCheckbox');
-    const additionalTextField = document.getElementById('additionalText');
     let isDownloadButtonActive = false;
 
     let currentImageIndex = 0;
@@ -108,7 +106,6 @@ function downloadImages() {
         return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    // Function to download images one by one with a delay
     function downloadNextImage(index) {
         if (index < sortedImages.length) {
             const image = sortedImages[index];
@@ -138,6 +135,9 @@ function downloadImages() {
                 // Draw the content onto the cropped canvas
                 ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
 
+                // Convert the canvas to a data URL with JPEG format
+                const jpegDataURL = canvas.toDataURL('image/jpeg', 1); // Adjust quality if needed
+
                 const now = new Date();
                 const timestamp = now.getUTCFullYear() +
                     '_' + padNumber(now.getUTCMonth() + 1) +
@@ -152,12 +152,15 @@ function downloadImages() {
                 // Determine whether to add 'filler' suffix
                 const suffix = fillerCheckbox.checked ? 'filler' : '';
 
+
                 // Create the final filename
-                const finalFileName = timestamp + '_' + additionalText + '_' + suffix;
+                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg';
+
+
 
                 // Trigger download for each image with the timestamped name
                 const downloadLink = document.createElement('a');
-                downloadLink.href = canvas.toDataURL();
+                downloadLink.href = jpegDataURL;
 
                 // Use the final filename for the cropped image
                 downloadLink.download = finalFileName;
@@ -171,14 +174,12 @@ function downloadImages() {
                 downloadedCount++;
                 progressCounter.textContent = `${downloadedCount}/${images.length} images downloaded`;
 
-
-                // Wait for one second before downloading the next image
-                setTimeout(() => {
-                    downloadNextImage(index + 1);
-                }, 1000);
+                
+                downloadNextImage(index + 1);
             };
         }
     }
+
 
     // Start downloading the first image
     downloadNextImage(0);

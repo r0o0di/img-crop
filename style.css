@@ -13,6 +13,39 @@ input[type="file"] {
     display: none;
 }
 
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    outline: none;
+    border: 2px solid #ffcb47; /* Border color */
+    border-radius: 0.1rem;
+    width: 2rem;
+    height: 2rem;
+    background-color: #111111; /* Background color when unchecked */
+
+    /* Checkmark style */
+    position: relative;
+  }
+
+  /* Checkmark when the checkbox is checked */
+  input[type="checkbox"]:checked::before {
+    content: '\2713'; /* Checkmark character */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 2rem;
+    color: #ffcb47; /* Checkmark color */
+  }
+
+  input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    width: 200px; /* Adjust the width as needed */
+  }
 
 .btns-container {
     display: flex;
