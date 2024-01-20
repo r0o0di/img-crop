@@ -174,8 +174,10 @@ function downloadImages() {
                 downloadedCount++;
                 progressCounter.textContent = `${downloadedCount}/${images.length} images downloaded`;
 
-                
-                downloadNextImage(index + 1);
+                 // Wait before downloading the next image
+                setTimeout(() => {
+                    downloadNextImage(index + 1);
+                }, 100);
             };
         }
     }
