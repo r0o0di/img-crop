@@ -146,11 +146,11 @@ function downloadImages() {
 
                 const now = new Date();
                 const timestamp = now.getUTCFullYear() +
-                    padNumber(now.getUTCMonth() + 1) +
-                    padNumber(now.getUTCDate()) +
+                    '_' + padNumber(now.getUTCMonth() + 1) +
+                    '_' + padNumber(now.getUTCDate()) +
                     '_' + padNumber(now.getUTCHours()) +
-                    padNumber(now.getUTCMinutes()) +
-                    padNumber(now.getUTCSeconds());
+                    '_' + padNumber(now.getUTCMinutes()) +
+                    '_' + padNumber(now.getUTCSeconds());
 
                 // Get additional text from the input field
                 const additionalText = additionalTextField.value;
