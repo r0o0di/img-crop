@@ -71,6 +71,7 @@ function previewImages() {
             const previewImageElement = new Image();
             previewImageElement.src = canvas.toDataURL();
             previewImageElement.classList.add('preview-image');
+            previewImageElement.loading = "lazy"
             previewContainer.appendChild(previewImageElement);
 
             // Move to the next image
@@ -94,10 +95,10 @@ function downloadImages() {
     
 
     // Check if the download button is active
-    if (downloadButton.style.background !== "rgb(255, 203, 71)") {
-        return;
+    // if (downloadButton.style.background !== "rgb(255, 203, 71)") {
+    //     return;
 
-    }
+    // }
 
     if (additionalTextField.value.trim() === "") {
         const emptyText = document.getElementById("emptyText");
