@@ -224,7 +224,7 @@ function calculateMargin(img, direction) {
                 const blue = data[index + 2];
 
                 if (!(red < 30 && green < 30 && blue < 30)) {
-                    return x;
+                    return x + 1;
                 }
             }
         }
@@ -237,7 +237,7 @@ function calculateMargin(img, direction) {
                 const blue = data[index + 2];
 
                 if (!(red < 30 && green < 30 && blue < 30)) {
-                    return canvas.width - 1 - x;
+                    return canvas.width - x;
                 }
             }
         }
