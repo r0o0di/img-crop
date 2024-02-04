@@ -80,10 +80,6 @@ label {
     display: none;
 }
 
-#emptyText {
-    color: red;
-}
-
 .download {
     color: #111111;
     background-color: gray;

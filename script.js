@@ -1,4 +1,3 @@
-
 function previewImages() {
     console.log("Starting image preview...");
     const input = document.getElementById('uploadInput');
@@ -20,13 +19,6 @@ function previewImages() {
         counterElement.style.display = 'block';
         counterElement.textContent = `${currentImageIndex}/${images.length} images loaded`;
 
-        // Check if the download button is active
-        if (isDownloadButtonActive) {
-            downloadButton.style.background = "#ffcb47";
-        } else {
-            downloadButton.style.background = "";
-        }
-
         if (currentImageIndex < images.length) {
             previewImage(images[currentImageIndex]);
         } else {
@@ -36,13 +28,10 @@ function previewImages() {
         }
     }
 
-
     function previewImage(image) {
         console.log(`Processing image: ${image.name}`);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const finalWidth = 1625;
-        const finalHeight = 1220;
 
         const img = new Image();
         img.src = URL.createObjectURL(image);
@@ -52,20 +41,20 @@ function previewImages() {
             downloadButton.style.display = 'none';
             progressCounter.style.display = "none";
 
-            // Calculate left and right margins based on black pixels
-            const leftMargin = calculateMargin(img, 'left');
-            const rightMargin = calculateMargin(img, 'right');
+            // Calculate margins based on black pixels
+            const margins = calculateMargins(img);
 
-            // Calculate cropped dimensions based on margins
-            const cropWidth = img.width - leftMargin - rightMargin;
-            const cropHeight = (cropWidth / finalWidth) * finalHeight;
-
-            // Set canvas dimensions to the final size
-            canvas.width = finalWidth;
-            canvas.height = finalHeight;
+            // Set canvas dimensions to the cropped size
+            canvas.width = img.width - margins.left - margins.right;
+            canvas.height = img.height - margins.top - margins.bottom;
 
             // Draw the content onto the cropped canvas
-            ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+            ctx.drawImage(
+                img,
+                margins.left, margins.top,
+                canvas.width, canvas.height,
+                0, 0, canvas.width, canvas.height
+            );
 
             // Display the preview on the page
             const previewImageElement = new Image();
@@ -91,14 +80,7 @@ function downloadImages() {
     const additionalTextField = document.getElementById('additionalText');
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
     const progressCounter = document.getElementById('progressCounter');
-    let downloadedCount = 0; 
-    
-
-    // Check if the download button is active
-    // if (downloadButton.style.background !== "rgb(255, 203, 71)") {
-    //     return;
-
-    // }
+    let downloadedCount = 0;
 
     if (additionalTextField.value.trim() === "") {
         const emptyText = document.getElementById("emptyText");
@@ -118,8 +100,6 @@ function downloadImages() {
             const image = sortedImages[index];
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const finalWidth = 1625;
-            const finalHeight = 1220;
             const counterElement = document.getElementById('counter');
 
             const img = new Image();
@@ -127,20 +107,20 @@ function downloadImages() {
 
             img.onload = function () {
                 counterElement.style.display = "none";
-                // Calculate left and right margins based on black pixels
-                const leftMargin = calculateMargin(img, 'left');
-                const rightMargin = calculateMargin(img, 'right');
+                // Calculate margins based on black pixels
+                const margins = calculateMargins(img);
 
-                // Calculate cropped dimensions based on margins
-                const cropWidth = img.width - leftMargin - rightMargin;
-                const cropHeight = (cropWidth / finalWidth) * finalHeight;
-
-                // Set canvas dimensions to the final size
-                canvas.width = finalWidth;
-                canvas.height = finalHeight;
+                // Set canvas dimensions to the cropped size
+                canvas.width = img.width - margins.left - margins.right;
+                canvas.height = img.height - margins.top - margins.bottom;
 
                 // Draw the content onto the cropped canvas
-                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+                ctx.drawImage(
+                    img,
+                    margins.left, margins.top,
+                    canvas.width, canvas.height,
+                    0, 0, canvas.width, canvas.height
+                );
 
                 // Convert the canvas to a data URL with JPEG format
                 const jpegDataURL = canvas.toDataURL('image/jpeg', 1); // Adjust quality if needed
@@ -159,11 +139,8 @@ function downloadImages() {
                 // Determine whether to add 'filler' suffix
                 const suffix = fillerCheckbox.checked ? 'filler' : '';
 
-
                 // Create the final filename
-                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg'; 
-
-
+                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg';
 
                 // Trigger download for each image with the timestamped name
                 const downloadLink = document.createElement('a');
@@ -189,7 +166,6 @@ function downloadImages() {
         }
     }
 
-
     // Start downloading the first image
     downloadNextImage(0);
 }
@@ -199,7 +175,7 @@ function padNumber(number) {
     return number < 10 ? '0' + number : number;
 }
 
-function calculateMargin(img, direction) {
+function calculateMargins(img) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -215,33 +191,33 @@ function calculateMargin(img, direction) {
     const data = imageData.data;
 
     // Calculate margins based on black pixels
-    if (direction === 'left') {
-        for (let x = 0; x < canvas.width; x++) {
-            for (let y = 0; y < canvas.height; y++) {
-                const index = (y * canvas.width + x) * 4;
-                const red = data[index];
-                const green = data[index + 1];
-                const blue = data[index + 2];
+    let leftMargin = canvas.width;
+    let rightMargin = 0;
+    let topMargin = canvas.height;
+    let bottomMargin = 0;
 
-                if (!(red < 30 && green < 30 && blue < 30)) {
-                    return x + 1;
-                }
-            }
-        }
-    } else if (direction === 'right') {
-        for (let x = canvas.width - 1; x >= 0; x--) {
-            for (let y = 0; y < canvas.height; y++) {
-                const index = (y * canvas.width + x) * 4;
-                const red = data[index];
-                const green = data[index + 1];
-                const blue = data[index + 2];
+    for (let x = 0; x < canvas.width; x++) {
+        for (let y = 0; y < canvas.height; y++) {
+            const index = (y * canvas.width + x) * 4;
+            const red = data[index];
+            const green = data[index + 1];
+            const blue = data[index + 2];
 
-                if (!(red < 30 && green < 30 && blue < 30)) {
-                    return canvas.width - x;
-                }
+            if (!(red < 30 && green < 30 && blue < 30)) {
+                // Update left and right margins
+                leftMargin = Math.min(leftMargin, x);
+                rightMargin = Math.max(rightMargin, x);
+                // Update top and bottom margins
+                topMargin = Math.min(topMargin, y);
+                bottomMargin = Math.max(bottomMargin, y);
             }
         }
     }
 
-    return 0;
+    return {
+        left: leftMargin,
+        right: canvas.width - rightMargin,
+        top: topMargin,
+        bottom: canvas.height - bottomMargin
+    };
 }
