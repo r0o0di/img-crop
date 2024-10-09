@@ -126,12 +126,9 @@ function downloadImages() {
                 const jpegDataURL = canvas.toDataURL('image/jpeg', 1); // Adjust quality if needed
 
                 const now = new Date();
-                const timestamp = now.getUTCFullYear() +
-                    '_' + padNumber(now.getUTCMonth() + 1) +
-                    '_' + padNumber(now.getUTCDate()) +
-                    '_' + padNumber(now.getUTCHours()) +
-                    '_' + padNumber(now.getUTCMinutes()) +
-                    '_' + padNumber(now.getUTCSeconds());
+                const timestamp = padNumber(now.getUTCSeconds()) +
+                '_' + padNumber(now.getUTCMilliseconds());
+
 
                 // Get additional text from the input field
                 const additionalText = additionalTextField.value;
