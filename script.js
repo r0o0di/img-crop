@@ -80,7 +80,7 @@ function downloadImages() {
     const additionalTextField = document.getElementById('additionalText');
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
     const progressCounter = document.getElementById('progressCounter');
-    let downloadedCount = 0;
+    let downloadedCount = 1;
 
     if (additionalTextField.value.trim() === "") {
         const emptyText = document.getElementById("emptyText");
@@ -153,7 +153,7 @@ function downloadImages() {
                 // Update the progress counter
                 progressCounter.style.display = "block";
                 downloadedCount++;
-                progressCounter.textContent = `${downloadedCount}/${images.length} images downloaded`;
+                progressCounter.textContent = `${downloadedCount - 1y}/${images.length} images downloaded`;
 
                 // Wait before downloading the next image
                 setTimeout(() => {
