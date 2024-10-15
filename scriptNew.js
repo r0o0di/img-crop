@@ -1,3 +1,6 @@
+// Include JSZip
+const zip = new JSZip(); // Create a new instance of JSZip
+
 function previewImages() {
     console.log("Starting image preview...");
     const input = document.getElementById('uploadInput');
@@ -19,6 +22,13 @@ function previewImages() {
         counterElement.style.display = 'block';
         counterElement.textContent = `${currentImageIndex}/${images.length} images loaded`;
 
+        // Check if the download button is active
+        if (isDownloadButtonActive) {
+            downloadButton.style.background = "#ffcb47";
+        } else {
+            downloadButton.style.background = "";
+        }
+
         if (currentImageIndex < images.length) {
             previewImage(images[currentImageIndex]);
         } else {
@@ -32,6 +42,8 @@ function previewImages() {
         console.log(`Processing image: ${image.name}`);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
+        const finalWidth = 1625;
+        const finalHeight = 1220;
 
         const img = new Image();
         img.src = URL.createObjectURL(image);
@@ -41,26 +53,25 @@ function previewImages() {
             downloadButton.style.display = 'none';
             progressCounter.style.display = "none";
 
-            // Calculate margins based on black pixels
-            const margins = calculateMargins(img);
+            // Calculate left and right margins based on black pixels
+            const leftMargin = calculateMargin(img, 'left');
+            const rightMargin = calculateMargin(img, 'right');
 
-            // Set canvas dimensions to the cropped size
-            canvas.width = img.width - margins.left - margins.right;
-            canvas.height = img.height - margins.top - margins.bottom;
+            // Calculate cropped dimensions based on margins
+            const cropWidth = img.width - leftMargin - rightMargin;
+            const cropHeight = (cropWidth / finalWidth) * finalHeight;
+
+            // Set canvas dimensions to the final size
+            canvas.width = finalWidth;
+            canvas.height = finalHeight;
 
             // Draw the content onto the cropped canvas
-            ctx.drawImage(
-                img,
-                margins.left, margins.top,
-                canvas.width, canvas.height,
-                0, 0, canvas.width, canvas.height
-            );
+            ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
 
             // Display the preview on the page
             const previewImageElement = new Image();
             previewImageElement.src = canvas.toDataURL();
             previewImageElement.classList.add('preview-image');
-            previewImageElement.loading = "lazy"
             previewContainer.appendChild(previewImageElement);
 
             // Move to the next image
@@ -82,24 +93,33 @@ function downloadImages() {
     const progressCounter = document.getElementById('progressCounter');
     let downloadedCount = 1;
 
+    // Check if the download button is active
+    if (downloadButton.style.background !== "rgb(255, 203, 71)") {
+        return;
+    }
+
     if (additionalTextField.value.trim() === "") {
         const emptyText = document.getElementById("emptyText");
         alert(emptyText.textContent);
         return;
     }
 
-    // Sort images based on their names
     const sortedImages = Array.from(images).sort((a, b) => {
         const nameA = a.name.toLowerCase();
         const nameB = b.name.toLowerCase();
         return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
     });
 
+    // Collect images for zip file
+    const zipImages = [];
+
     function downloadNextImage(index) {
         if (index < sortedImages.length) {
             const image = sortedImages[index];
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            const finalWidth = 1625;
+            const finalHeight = 1220;
             const counterElement = document.getElementById('counter');
 
             const img = new Image();
@@ -107,59 +127,37 @@ function downloadImages() {
 
             img.onload = function () {
                 counterElement.style.display = "none";
-                // Calculate margins based on black pixels
-                const margins = calculateMargins(img);
+                const leftMargin = calculateMargin(img, 'left');
+                const rightMargin = calculateMargin(img, 'right');
 
-                // Set canvas dimensions to the cropped size
-                canvas.width = img.width - margins.left - margins.right;
-                canvas.height = img.height - margins.top - margins.bottom;
+                const cropWidth = img.width - leftMargin - rightMargin;
+                const cropHeight = (cropWidth / finalWidth) * finalHeight;
 
-                // Draw the content onto the cropped canvas
-                ctx.drawImage(
-                    img,
-                    margins.left, margins.top,
-                    canvas.width, canvas.height,
-                    0, 0, canvas.width, canvas.height
-                );
+                canvas.width = finalWidth;
+                canvas.height = finalHeight;
 
-                // Convert the canvas to a data URL with JPEG format
-                const jpegDataURL = canvas.toDataURL('image/jpeg', 1); // Adjust quality if needed
+                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
 
-                const now = new Date();
-                const timestamp = padNumber(now.getUTCSeconds()) +
-                '_' + padNumber(now.getUTCMilliseconds());
+                const jpegDataURL = canvas.toDataURL('image/jpeg', 1);
 
 
-                // Get additional text from the input field
                 const additionalText = additionalTextField.value;
-
-                // Determine whether to add 'filler' suffix
                 const suffix = fillerCheckbox.checked ? 'filler' : '';
+                const finalFileName = additionalText + '-' + downloadedCount + suffix + '.jpg';
 
-                // Create the final filename
-                const finalFileName = timestamp + downloadedCount + '_' + additionalText + '_' + suffix + '.jpg';
+                // Store in zip array
+                zipImages.push({ finalFileName, jpegDataURL });
 
-                // Trigger download for each image with the timestamped name
-                const downloadLink = document.createElement('a');
-                downloadLink.href = jpegDataURL;
-
-                // Use the final filename for the cropped image
-                downloadLink.download = finalFileName;
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                // Update the progress counter
+                // Update progress
                 progressCounter.style.display = "block";
                 downloadedCount++;
-                progressCounter.textContent = `${downloadedCount - 1}/${images.length} images downloaded`;
+                progressCounter.textContent = `${downloadedCount}/${images.length} images processed`;
 
-                // Wait before downloading the next image
-                setTimeout(() => {
-                    downloadNextImage(index + 1);
-                }, 300);
+                downloadNextImage(index + 1);
             };
+        } else {
+            // When all images are processed, offer ZIP download
+            downloadZip(zipImages);
         }
     }
 
@@ -172,49 +170,72 @@ function padNumber(number) {
     return number < 10 ? '0' + number : number;
 }
 
-function calculateMargins(img) {
+function calculateMargin(img, direction) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
-    // Set canvas dimensions to the image size
     canvas.width = img.width;
     canvas.height = img.height;
-
-    // Draw the image onto the canvas
     ctx.drawImage(img, 0, 0);
-
-    // Get pixel data
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Calculate margins based on black pixels
-    let leftMargin = canvas.width;
-    let rightMargin = 0;
-    let topMargin = canvas.height;
-    let bottomMargin = 0;
-
-    for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
-            const index = (y * canvas.width + x) * 4;
-            const red = data[index];
-            const green = data[index + 1];
-            const blue = data[index + 2];
-
-            if (!(red < 30 && green < 30 && blue < 30)) {
-                // Update left and right margins
-                leftMargin = Math.min(leftMargin, x);
-                rightMargin = Math.max(rightMargin, x);
-                // Update top and bottom margins
-                topMargin = Math.min(topMargin, y);
-                bottomMargin = Math.max(bottomMargin, y);
+    if (direction === 'left') {
+        for (let x = 0; x < canvas.width; x++) {
+            for (let y = 0; y < canvas.height; y++) {
+                const index = (y * canvas.width + x) * 4;
+                const red = data[index];
+                const green = data[index + 1];
+                const blue = data[index + 2];
+                if (!(red < 30 && green < 30 && blue < 30)) {
+                    return x;
+                }
+            }
+        }
+    } else if (direction === 'right') {
+        for (let x = canvas.width - 1; x >= 0; x--) {
+            for (let y = 0; y < canvas.height; y++) {
+                const index = (y * canvas.width + x) * 4;
+                const red = data[index];
+                const green = data[index + 1];
+                const blue = data[index + 2];
+                if (!(red < 30 && green < 30 && blue < 30)) {
+                    return canvas.width - 1 - x;
+                }
             }
         }
     }
 
-    return {
-        left: leftMargin,
-        right: canvas.width - rightMargin,
-        top: topMargin,
-        bottom: canvas.height - bottomMargin
-    };
+    return 0;
+}
+
+// JSZip function to generate and download the zip file
+async function downloadZip(images) {
+    const zip = new JSZip();
+    const imgFolder = zip.folder("images");
+
+    for (let i = 0; i < images.length; i++) {
+        const { finalFileName, jpegDataURL } = images[i];
+        const blob = dataURLToBlob(jpegDataURL);
+        imgFolder.file(finalFileName, blob);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = zipUrl;
+    a.download = 'cropped_images.zip';
+    a.click();
+    URL.revokeObjectURL(zipUrl);
+}
+
+// Convert DataURL to Blob
+function dataURLToBlob(dataURL) {
+    const byteString = atob(dataURL.split(',')[1]);
+    const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
 }
