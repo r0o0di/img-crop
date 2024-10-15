@@ -222,7 +222,7 @@ async function downloadZip(images) {
     const zipUrl = URL.createObjectURL(zipBlob);
     const a = document.createElement('a');
     a.href = zipUrl;
-    a.download = 'cropped_images.zip';
+    a.download = '0cropped_images.zip';
     a.click();
     URL.revokeObjectURL(zipUrl);
 }
