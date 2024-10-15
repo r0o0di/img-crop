@@ -142,7 +142,7 @@ function downloadImages() {
 
 
                 const additionalText = additionalTextField.value;
-                const suffix = fillerCheckbox.checked ? 'filler' : '';
+                const suffix = fillerCheckbox.checked ? '-filler' : '';
                 const finalFileName = additionalText + '-' + downloadedCount + suffix + '.jpg';
 
                 // Store in zip array
@@ -211,12 +211,11 @@ function calculateMargin(img, direction) {
 // JSZip function to generate and download the zip file
 async function downloadZip(images) {
     const zip = new JSZip();
-    const imgFolder = zip.folder("images");
 
     for (let i = 0; i < images.length; i++) {
         const { finalFileName, jpegDataURL } = images[i];
         const blob = dataURLToBlob(jpegDataURL);
-        imgFolder.file(finalFileName, blob);
+        zip.file(finalFileName, blob);
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
