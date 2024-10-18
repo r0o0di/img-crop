@@ -241,10 +241,11 @@ async function downloadZip(images) {
     });
 
     // After zip is fully generated, download it
+    const { finalFileName } = images[0];
     const zipUrl = URL.createObjectURL(zipBlob);
     const a = document.createElement('a');
     a.href = zipUrl;
-    a.download = '0cropped_images.zip';
+    a.download = `!${finalFileName.split('-')[0]}.zip`;
     a.click();
     URL.revokeObjectURL(zipUrl);
 
