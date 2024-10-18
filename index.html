@@ -32,8 +32,14 @@
         <p id="emptyText">Text field is empty</p>
         <button class="download" onclick="downloadImages()">Download</button>
         <p class="counter" id="counter">0/0 images loaded...</p>
-        <p class="progress" id="progressCounter">0/0 images downloaded...</p>
+        <p class="progress" id="progressCounter">0/0 images processed...</p>
 
+        <div id="zipProgressBarContainer" style="display: none;">
+            <progress id="zipProgressBar" value="0" max="100"></progress>
+            <span id="zipProgressPercent">0%</span>
+        </div>
+        
+        
         <hr>
         <div id="previewContainer"></div>
     </div>
@@ -43,3 +49,14 @@
 </body>
 
 </html>
+
+
+
+<!-- 
+
+like i said, i want to be able to download all those cropped images, but sometimes, i upload a lot of images at once. is there a way to put all the renamed images in a zip file to download all images with just one click?
+
+also, can you add simple way to somehow track how many files are being loaded or renamed? like a simple progress bar or a counter to know how much i should wait.
+ i want a progress bar to track each file being processed and put in the zip file, and then i want another progress bar to actuallay track the zip file itself, how long more it will take to fully download
+ 
+ -->

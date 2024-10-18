@@ -212,19 +212,44 @@ function calculateMargin(img, direction) {
 async function downloadZip(images) {
     const zip = new JSZip();
 
+    // Reference to the progress bar elements
+    const progressBarContainer = document.getElementById('zipProgressBarContainer');
+    const progressBar = document.getElementById('zipProgressBar');
+    const progressPercent = document.getElementById('zipProgressPercent');
+
+    // Reset progress bar and display it
+    progressBar.value = 0;
+    progressPercent.textContent = '0%';
+    progressBarContainer.style.display = 'block';
+
+    // Add images to zip folder
     for (let i = 0; i < images.length; i++) {
         const { finalFileName, jpegDataURL } = images[i];
         const blob = dataURLToBlob(jpegDataURL);
         zip.file(finalFileName, blob);
     }
 
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    // Generate zip with progress tracking
+    const zipBlob = await zip.generateAsync({ 
+        type: 'blob', 
+        compression: 'STORE', // You can use 'DEFLATE' for compression
+        streamFiles: true
+    }, (metadata) => {
+        const percent = Math.floor(metadata.percent);
+        progressBar.value = percent; // Update the progress bar value
+        progressPercent.textContent = `${percent}%`; // Update the text with percentage
+    });
+
+    // After zip is fully generated, download it
     const zipUrl = URL.createObjectURL(zipBlob);
     const a = document.createElement('a');
     a.href = zipUrl;
     a.download = '0cropped_images.zip';
     a.click();
     URL.revokeObjectURL(zipUrl);
+
+    // Hide progress bar after download starts
+    progressBarContainer.style.display = 'none';
 }
 
 // Convert DataURL to Blob
@@ -238,3 +263,4 @@ function dataURLToBlob(dataURL) {
     }
     return new Blob([ab], { type: mimeString });
 }
+
