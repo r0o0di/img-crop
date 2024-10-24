@@ -91,7 +91,7 @@ function downloadImages() {
     const additionalTextField = document.getElementById('additionalText');
     const downloadButton = document.querySelector('button[onclick="downloadImages()"]');
     const progressCounter = document.getElementById('progressCounter');
-    let downloadedCount = 1;
+    let downloadedCount = document.getElementById('downloadedCount').value || 1;
 
     // Check if the download button is active
     if (downloadButton.style.background !== "rgb(255, 203, 71)") {
