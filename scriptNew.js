@@ -42,8 +42,6 @@ function previewImages() {
         console.log(`Processing image: ${image.name}`);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const finalWidth = 1625;
-        const finalHeight = 1220;
 
         const img = new Image();
         img.src = URL.createObjectURL(image);
@@ -59,14 +57,12 @@ function previewImages() {
 
             // Calculate cropped dimensions based on margins
             const cropWidth = img.width - leftMargin - rightMargin;
-            const cropHeight = (cropWidth / finalWidth) * finalHeight;
+                const cropHeight = img.height;
 
-            // Set canvas dimensions to the final size
-            canvas.width = finalWidth;
-            canvas.height = finalHeight;
+                canvas.width = cropWidth;
+                canvas.height = cropHeight;
 
-            // Draw the content onto the cropped canvas
-            ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
             // Display the preview on the page
             const previewImageElement = new Image();
@@ -118,8 +114,6 @@ function downloadImages() {
             const image = sortedImages[index];
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const finalWidth = 1625;
-            const finalHeight = 1220;
             const counterElement = document.getElementById('counter');
 
             const img = new Image();
@@ -131,12 +125,12 @@ function downloadImages() {
                 const rightMargin = calculateMargin(img, 'right');
 
                 const cropWidth = img.width - leftMargin - rightMargin;
-                const cropHeight = (cropWidth / finalWidth) * finalHeight;
+                const cropHeight = img.height;
 
-                canvas.width = finalWidth;
-                canvas.height = finalHeight;
+                canvas.width = cropWidth;
+                canvas.height = cropHeight;
 
-                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, finalWidth, finalHeight);
+                ctx.drawImage(img, leftMargin, 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
                 const jpegDataURL = canvas.toDataURL('image/jpeg', 1);
 
