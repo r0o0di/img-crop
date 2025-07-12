@@ -86,9 +86,12 @@ function previewImages() {
 
         const ctx = canvas.getContext('2d');
 
-        const finalWidth = 2167;
+      //  const finalWidth = 2167;
+        const finalWidth = 1625;
 
         const finalHeight = 1220;
+        
+
 
 
 
@@ -238,10 +241,10 @@ function downloadImages() {
 
             const ctx = canvas.getContext('2d');
 
-            const finalWidth = 2167;
-
+          //  const finalWidth = 2167;
+            const finalWidth = 1625;
             const finalHeight = 1220;
-
+            
             const counterElement = document.getElementById('counter');
 
 
